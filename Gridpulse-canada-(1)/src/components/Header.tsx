@@ -130,13 +130,13 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
                 <span className="font-display font-bold text-xl tracking-tight text-white">
-                  Gridpulse <span className="text-emerald-400">Canada</span>
+                  GridPulse <span className="text-emerald-400">Canada</span>
                 </span>
                 <span className="text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
                   OS
                 </span>
               </div>
-              <span className="text-[10px] text-slate-400 tracking-wide font-mono hidden sm:inline">Whole-Home Energy OS & Arbitrage</span>
+              <span className="text-[10px] text-slate-400 tracking-wide font-mono hidden sm:inline">Whole-Home Energy OS</span>
             </div>
           </div>
 
@@ -213,7 +213,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="relative inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl font-bold text-xs uppercase tracking-wider text-slate-950 bg-emerald-400 hover:bg-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:shadow-[0_0_20px_rgba(16,185,129,0.5)] transition-all duration-200 cursor-pointer shrink-0"
             >
               <Sparkles className="w-3.5 h-3.5 text-slate-950" />
-              <span>Priority Beta</span>
+              <span>Get Priority Pass</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
             </button>
 

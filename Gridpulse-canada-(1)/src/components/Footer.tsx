@@ -29,7 +29,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenWaitlist }) =>
                 </div>
               </div>
               <span className="font-display font-bold text-base text-white">
-                Gridpulse<span className="text-emerald-400">.ca</span>
+                GridPulse<span className="text-emerald-400"> Canada</span>
               </span>
               <span className="text-[9px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                 Ontario ULO OS
@@ -37,7 +37,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenWaitlist }) =>
             </div>
 
             <p className="text-slate-400 text-xs leading-relaxed max-w-sm">
-              Gridpulse Canada is the autonomous clean-tech energy operating system designed for Ontario homeowners and renters to eliminate peak electricity bills through 3.9¢ Ultra-Low Overnight (ULO) arbitrage.
+              GridPulse Canada is the autonomous clean-tech energy operating system designed for Ontario homeowners and renters to eliminate peak electricity bills through 3.9¢ Ultra-Low Overnight (ULO) arbitrage.
             </p>
 
             <div className="flex items-center gap-1.5 text-emerald-400 font-semibold text-xs">
@@ -49,31 +49,15 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenWaitlist }) =>
           {/* Quick Links */}
           <div className="space-y-2.5">
             <h4 className="font-display font-bold text-white uppercase text-[11px] tracking-wider">
-              Architecture
+              Navigation
             </h4>
             <ul className="space-y-1.5 text-slate-400">
               <li>
                 <button
-                  onClick={() => onNavigate('arbitrage')}
+                  onClick={() => onNavigate('hero')}
                   className="hover:text-emerald-400 transition-colors cursor-pointer"
                 >
-                  The 10.02x Rate Spread
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => onNavigate('ecosystem')}
-                  className="hover:text-emerald-400 transition-colors cursor-pointer"
-                >
-                  Whole-Home Fleet
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => onNavigate('simulator')}
-                  className="hover:text-emerald-400 transition-colors cursor-pointer"
-                >
-                  Behind-The-Meter HUD
+                  Overview & ROI
                 </button>
               </li>
               <li>
@@ -81,15 +65,31 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenWaitlist }) =>
                   onClick={() => onNavigate('calculator')}
                   className="hover:text-emerald-400 transition-colors cursor-pointer"
                 >
-                  12-Month ROI Model
+                  Savings Simulator
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => onNavigate('controls')}
+                  onClick={() => onNavigate('tech-deck')}
                   className="hover:text-emerald-400 transition-colors cursor-pointer"
                 >
-                  Hardware Guardrails
+                  Clean-Tech Tech Deck
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onNavigate('faq')}
+                  className="hover:text-emerald-400 transition-colors cursor-pointer"
+                >
+                  FAQ & Knowledge Base
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={onOpenWaitlist}
+                  className="hover:text-emerald-400 transition-colors cursor-pointer"
+                >
+                  Priority Pass Cohort
                 </button>
               </li>
             </ul>
@@ -137,7 +137,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenWaitlist }) =>
               <span>Ontario Regulatory & Pilot Framework (OEB Compliance Notice)</span>
             </div>
             <p>
-              Gridpulse Canada is an independent software application and clean-tech demand response aggregator operating under the framework of the Ontario Energy Board (OEB) Innovation Sandbox guidelines and Section 57.1 of the Ontario Energy Board Act. Gridpulse communicates with customer-owned behind-the-meter (BTM) equipment via manufacturer authorized telemetry protocols (OAuth 2.0 / REST / WebSockets).
+              GridPulse Canada is an independent software application and clean-tech demand response aggregator operating under the framework of the Ontario Energy Board (OEB) Innovation Sandbox guidelines and Section 57.1 of the Ontario Energy Board Act. GridPulse communicates with customer-owned behind-the-meter (BTM) equipment via manufacturer authorized telemetry protocols (OAuth 2.0 / REST / WebSockets).
             </p>
             <p>
               All trademarks including Tesla®, Powerwall®, Ford®, FordPass®, Enphase®, EcoFlow®, Bluetti®, ecobee®, Google Nest®, and Shelly® are the properties of their respective trademark holders. Mention does not imply endorsement, affiliation, or direct sponsorship. Electricity rates referenced are published by the Ontario Energy Board (OEB) under the Regulated Price Plan (RPP) Ultra-Low Overnight (ULO) rate structure.
@@ -146,7 +146,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenWaitlist }) =>
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-slate-400 text-[11px]">
             <div>
-              © {new Date().getFullYear()} Gridpulse Canada Technologies Inc. Proudly engineered in Toronto, ON.
+              © {new Date().getFullYear()} GridPulse Canada Technologies Inc. Proudly engineered in Toronto, ON.
             </div>
             <div className="flex items-center gap-3">
               <span className="hover:text-slate-300 cursor-pointer">Privacy Policy</span>

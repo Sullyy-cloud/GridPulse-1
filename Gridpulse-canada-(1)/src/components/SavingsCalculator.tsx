@@ -5,11 +5,9 @@ import {
   Battery,
   Sparkles,
   ArrowRight,
-  TrendingDown,
-  Zap,
-  Leaf,
   ShieldCheck,
-  Building2,
+  Thermometer,
+  Zap,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -26,51 +24,49 @@ interface SavingsCalculatorProps {
 }
 
 export const SavingsCalculator: React.FC<SavingsCalculatorProps> = ({ onOpenWaitlist }) => {
-  // Slider 1: Daily EV Driving (0 to 120 km/day, default: 40 km)
-  const [dailyKm, setDailyKm] = useState<number>(40);
+  // Slider 1: Daily EV Driving (0 to 50 kWh/day, default: 15 kWh)
+  const [evKwhPerDay, setEvKwhPerDay] = useState<number>(15);
 
-  // Slider 2: Battery Capacity Index (0: None, 1: 6 kWh Portable, 2: 13.5 kWh Powerwall, 3: 27 kWh Dual Powerwall)
-  const [batteryTierIndex, setBatteryTierIndex] = useState<number>(2);
+  // Slider 2: Home Battery Storage (0 to 27 kWh, default: 13.5 kWh)
+  const [batteryCapacityKwh, setBatteryCapacityKwh] = useState<number>(13.5);
 
-  const batteryTiers = [
-    { label: 'None (EV / Smart Only)', kwh: 0, desc: '0 kWh' },
-    { label: '1x Portable (EcoFlow / Bluetti)', kwh: 6.0, desc: '6 kWh' },
-    { label: '1x Tesla Powerwall / ESS', kwh: 13.5, desc: '13.5 kWh' },
-    { label: '2x Tesla Powerwalls / Whole-Home', kwh: 27.0, desc: '27 kWh' },
-  ];
-
-  const selectedBattery = batteryTiers[batteryTierIndex];
+  // Toggle: ecobee / Nest Pre-Cooling & Setback
+  const [smartThermostatEnabled, setSmartThermostatEnabled] = useState<boolean>(true);
 
   // Mathematical Ontario ULO Calculation
   const metrics = useMemo(() => {
     // 35.2¢ rate spread between On-Peak (39.1¢) and ULO (3.9¢)
     const rateSpread = 0.352;
 
-    // EV kWh per day: ~18 kWh per 100 km
-    const evKwhPerDay = (dailyKm / 100) * 18;
-    const evAnnualSavings = evKwhPerDay * 365 * rateSpread * 0.85; // 85% peak-shifting efficiency
+    // EV charging arbitrage (shifting baseline peak/mid-peak charging to 3.9¢ ULO)
+    const evAnnualSavings = evKwhPerDay * 365 * rateSpread * 0.85;
 
-    // Battery daily cycle arbitrage: 90% usable DoD, 88% round-trip efficiency
-    const batteryKwh = selectedBattery.kwh;
-    const batteryAnnualSavings = batteryKwh > 0 ? batteryKwh * 0.9 * 365 * rateSpread * 0.88 : 0;
+    // Battery daily cycle arbitrage: 90% usable DoD, 88% round-trip efficiency on ~250 weekday peak events
+    const batteryAnnualSavings = batteryCapacityKwh > 0 ? batteryCapacityKwh * 0.9 * 250 * rateSpread * 0.88 : 0;
 
-    // Smart thermostat & baseline smart plug load shift (~$320/yr)
-    const baselineSavings = 320;
+    // Smart thermostat pre-cooling arbitrage (~$315/yr)
+    const thermostatAnnualSavings = smartThermostatEnabled ? 315 : 0;
 
-    const totalAnnualSavings = Math.round(evAnnualSavings + batteryAnnualSavings + baselineSavings);
+    // Smart baseline appliance shifting (~$120/yr)
+    const baselineApplianceSavings = 120;
+
+    const totalAnnualSavings = Math.round(evAnnualSavings + batteryAnnualSavings + thermostatAnnualSavings + baselineApplianceSavings);
     const monthlyAverage = Math.round(totalAnnualSavings / 12);
     const fiveYearSavings = Math.round(totalAnnualSavings * 5 * 1.05); // 5% annual inflation factor
-    const peakReductionPercent = Math.min(85, Math.round(30 + (batteryKwh > 0 ? 35 : 0) + (dailyKm > 0 ? 20 : 0)));
-    const avoidedCarbonKg = Math.round(totalAnnualSavings * 0.72); // ~0.72 kg CO2 per dollar saved from peakers
+    const peakReductionPercent = Math.min(88, Math.round(
+      (batteryCapacityKwh > 0 ? 45 : 0) +
+      (evKwhPerDay > 0 ? 25 : 0) +
+      (smartThermostatEnabled ? 15 : 0) + 3
+    ));
+    const avoidedCarbonKg = Math.round(totalAnnualSavings * 0.72);
 
     // Monthly chart data
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const monthlyData = months.map((month, idx) => {
-      // Seasonal heating/cooling multipliers
       const seasonalFactor = [1.18, 1.15, 1.05, 0.92, 0.88, 1.1, 1.25, 1.22, 0.95, 0.9, 1.08, 1.16][idx];
-      const baseMonthlyStandard = Math.round(280 * seasonalFactor + (dailyKm > 0 ? 65 : 0) + (batteryKwh > 0 ? 45 : 0));
+      const baseMonthlyStandard = Math.round(280 * seasonalFactor + (evKwhPerDay > 0 ? evKwhPerDay * 4.5 : 0) + (batteryCapacityKwh > 0 ? 40 : 0));
       const monthlySaved = Math.round(monthlyAverage * seasonalFactor);
-      const gridpulseBill = Math.max(75, baseMonthlyStandard - monthlySaved);
+      const gridpulseBill = Math.max(65, baseMonthlyStandard - monthlySaved);
 
       return {
         month,
@@ -88,7 +84,7 @@ export const SavingsCalculator: React.FC<SavingsCalculatorProps> = ({ onOpenWait
       avoidedCarbonKg,
       monthlyData,
     };
-  }, [dailyKm, selectedBattery]);
+  }, [evKwhPerDay, batteryCapacityKwh, smartThermostatEnabled]);
 
   // Chart Tooltip
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -106,7 +102,7 @@ export const SavingsCalculator: React.FC<SavingsCalculatorProps> = ({ onOpenWait
               <span className="text-rose-400 font-bold">${data.standardBill}</span>
             </div>
             <div className="flex justify-between text-emerald-400 font-semibold">
-              <span>Gridpulse ULO:</span>
+              <span>GridPulse ULO:</span>
               <span className="text-emerald-300 font-bold">${data.gridpulseBill}</span>
             </div>
           </div>
@@ -114,6 +110,14 @@ export const SavingsCalculator: React.FC<SavingsCalculatorProps> = ({ onOpenWait
       );
     }
     return null;
+  };
+
+  // Helper description for battery size
+  const getBatteryDescription = (kwh: number) => {
+    if (kwh === 0) return 'No Battery (EV & Thermostat Only)';
+    if (kwh <= 6) return `${kwh} kWh (EcoFlow / Bluetti Portable)`;
+    if (kwh <= 14) return `${kwh} kWh (1x Tesla Powerwall / Enphase IQ)`;
+    return `${kwh} kWh (2x Powerwalls / Whole-Home ESS)`;
   };
 
   return (
@@ -131,7 +135,7 @@ export const SavingsCalculator: React.FC<SavingsCalculatorProps> = ({ onOpenWait
               Estimate Your Ontario ULO Savings
             </h2>
             <p className="text-xs sm:text-sm text-slate-400 max-w-xl mt-1.5">
-              Adjust your daily EV commute distance and home battery capacity to see exact monthly cash savings under the Ontario ULO tariff.
+              Adjust your daily EV driving consumption and home battery capacity to see exact monthly cash savings under Ontario's 3.9¢ ULO tariff.
             </p>
           </div>
 
@@ -141,7 +145,7 @@ export const SavingsCalculator: React.FC<SavingsCalculatorProps> = ({ onOpenWait
           </div>
         </div>
 
-        {/* 4 Dynamic KPI Cards */}
+        {/* Dynamic KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-8">
           <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-b from-emerald-500/15 to-emerald-500/5 border border-emerald-500/30 backdrop-blur-xl">
             <span className="text-[10px] font-mono uppercase text-emerald-400 font-bold block mb-1">
@@ -171,7 +175,7 @@ export const SavingsCalculator: React.FC<SavingsCalculatorProps> = ({ onOpenWait
 
           <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/50 border border-slate-800 backdrop-blur-xl">
             <span className="text-[10px] font-mono uppercase text-amber-400 font-bold block mb-1">
-              Peak Grid Relief
+              Peak Grid Reduction
             </span>
             <div className="font-display text-2xl sm:text-3xl lg:text-4xl font-extrabold text-amber-300">
               -{metrics.peakReductionPercent}%
@@ -195,9 +199,9 @@ export const SavingsCalculator: React.FC<SavingsCalculatorProps> = ({ onOpenWait
           </div>
         </div>
 
-        {/* 2-Column Main Section: 2 Sliders (Left) + 12-Month Bar Chart (Right) */}
+        {/* 2-Column Main Section: Controls (Left) + 12-Month Bar Chart (Right) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-          {/* Left Column: 2 Simplified Controls */}
+          {/* Left Column: Simplified Controls */}
           <div className="lg:col-span-5 bg-slate-900/50 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between backdrop-blur-xl space-y-6">
             <div className="space-y-6">
               <div className="border-b border-slate-800 pb-3">
@@ -205,68 +209,100 @@ export const SavingsCalculator: React.FC<SavingsCalculatorProps> = ({ onOpenWait
                   Household Parameters
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Two intuitive inputs to customize your Ontario home profile.
+                  Customize your clean-tech devices to model exact rate arbitrage.
                 </p>
               </div>
 
-              {/* Slider 1: Daily EV Driving */}
+              {/* Slider 1: Daily EV Driving (0–50 kWh/day) */}
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-xs sm:text-sm font-semibold text-slate-200 flex items-center gap-2">
                     <Car className="w-4 h-4 text-cyan-400" />
-                    Daily EV Driving Distance
+                    Daily EV Charging Demand
                   </span>
                   <span className="font-mono font-bold text-cyan-400 text-sm bg-cyan-500/10 px-2.5 py-0.5 rounded-md border border-cyan-500/20">
-                    {dailyKm} km/day
+                    {evKwhPerDay} kWh/day
                   </span>
                 </div>
 
                 <input
-                  id="ev-daily-km-slider"
+                  id="ev-kwh-slider"
                   type="range"
                   min="0"
-                  max="120"
-                  step="10"
-                  value={dailyKm}
-                  onChange={(e) => setDailyKm(parseInt(e.target.value, 10))}
+                  max="50"
+                  step="2.5"
+                  value={evKwhPerDay}
+                  onChange={(e) => setEvKwhPerDay(parseFloat(e.target.value))}
                   className="w-full h-2 bg-slate-950 rounded-lg appearance-none cursor-pointer accent-cyan-400"
                 />
 
                 <div className="flex justify-between text-[10px] text-slate-500 font-mono">
-                  <span>0 km (No EV)</span>
-                  <span>40 km (Avg GTA)</span>
-                  <span>80 km</span>
-                  <span>120 km (Commuter)</span>
+                  <span>0 kWh (No EV)</span>
+                  <span>15 kWh (~80 km)</span>
+                  <span>30 kWh</span>
+                  <span>50 kWh (Dual EV)</span>
                 </div>
               </div>
 
-              {/* Slider 2: Home Battery / Solar Generator */}
+              {/* Slider 2: Home Battery Storage (0–27 kWh) */}
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-xs sm:text-sm font-semibold text-slate-200 flex items-center gap-2">
                     <Battery className="w-4 h-4 text-emerald-400" />
-                    Home Battery / Generator
+                    Home Battery Storage
                   </span>
                   <span className="font-mono font-bold text-emerald-400 text-sm bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/20">
-                    {selectedBattery.desc}
+                    {batteryCapacityKwh} kWh
                   </span>
                 </div>
 
                 <input
-                  id="battery-tier-slider"
+                  id="battery-kwh-slider"
                   type="range"
                   min="0"
-                  max="3"
-                  step="1"
-                  value={batteryTierIndex}
-                  onChange={(e) => setBatteryTierIndex(parseInt(e.target.value, 10))}
+                  max="27"
+                  step="1.5"
+                  value={batteryCapacityKwh}
+                  onChange={(e) => setBatteryCapacityKwh(parseFloat(e.target.value))}
                   className="w-full h-2 bg-slate-950 rounded-lg appearance-none cursor-pointer accent-emerald-400"
                 />
 
                 <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs">
-                  <span className="text-slate-400 font-medium block text-[11px]">Selected Storage Asset:</span>
-                  <span className="text-white font-semibold">{selectedBattery.label}</span>
+                  <span className="text-slate-400 font-medium block text-[11px]">Storage Configuration:</span>
+                  <span className="text-white font-semibold">{getBatteryDescription(batteryCapacityKwh)}</span>
                 </div>
+              </div>
+
+              {/* Toggle: ecobee / Nest Pre-Cooling */}
+              <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                    <Thermometer className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-semibold text-white block">
+                      ecobee / Nest Pre-cooling
+                    </span>
+                    <span className="text-[10px] text-slate-400 block">
+                      Thermal storage chill before 4:00 PM peak
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  id="thermostat-toggle-btn"
+                  onClick={() => setSmartThermostatEnabled(!smartThermostatEnabled)}
+                  className={`w-11 h-6 flex items-center rounded-full p-0.5 transition-colors cursor-pointer ${
+                    smartThermostatEnabled ? 'bg-emerald-500' : 'bg-slate-800'
+                  }`}
+                >
+                  <div
+                    className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform ${
+                      smartThermostatEnabled ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
               </div>
             </div>
 
@@ -293,7 +329,7 @@ export const SavingsCalculator: React.FC<SavingsCalculatorProps> = ({ onOpenWait
                     12-Month Bill Comparison
                   </h3>
                   <p className="text-xs text-slate-400">
-                    Red (Standard Ontario Flat Rate) vs. Emerald (Gridpulse ULO Arbitrage)
+                    Red (Standard Ontario Flat Rate) vs. Emerald (GridPulse ULO Arbitrage)
                   </p>
                 </div>
 
@@ -304,7 +340,7 @@ export const SavingsCalculator: React.FC<SavingsCalculatorProps> = ({ onOpenWait
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 rounded bg-emerald-400" />
-                    <span className="text-emerald-400 font-bold">Gridpulse</span>
+                    <span className="text-emerald-400 font-bold">GridPulse</span>
                   </div>
                 </div>
               </div>
@@ -318,7 +354,7 @@ export const SavingsCalculator: React.FC<SavingsCalculatorProps> = ({ onOpenWait
                     <YAxis stroke="#64748b" tick={{ fill: '#94a3b8', fontSize: 11 }} tickFormatter={(val) => `$${val}`} />
                     <Tooltip content={<CustomTooltip />} />
                     <Bar dataKey="standardBill" name="Standard Ontario Flat Rate" fill="#f43f5e" radius={[4, 4, 0, 0]} opacity={0.8} />
-                    <Bar dataKey="gridpulseBill" name="With Gridpulse ULO" fill="#10b981" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="gridpulseBill" name="With GridPulse ULO" fill="#10b981" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

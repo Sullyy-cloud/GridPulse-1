@@ -33,7 +33,7 @@ export interface HardwareDevice {
   brand: string;
   model: string;
   category: AssetCategory;
-  connectionProtocol: string; // e.g. "Tesla Fleet API", "Enphase Cloud Envoy", "EcoFlow IoT SDK"
+  connectionProtocol: string;
   status: 'connected' | 'dispatching' | 'charging' | 'standby' | 'pre-cooling' | 'blocked';
   powerKw: number;
   batterySoc?: number; // 0 to 100%
@@ -45,8 +45,6 @@ export interface HardwareDevice {
   firmwareVersion: string;
   telematicsActive: boolean;
 }
-
-export type BtmDispatchMode = 'ulo_night' | 'peak_defense' | 'live_clock';
 
 export interface OntarioUtility {
   id: string;
@@ -62,21 +60,21 @@ export interface MonthlySavingsDataPoint {
   baselineBill: number;
   gridpulseBill: number;
   netSavings: number;
-  batterySavings: number;
-  evSavings: number;
-  thermostatSavings: number;
-  heavyLoadSavings: number;
+  batterySavings?: number;
+  evSavings?: number;
+  thermostatSavings?: number;
+  heavyLoadSavings?: number;
 }
 
 export interface SavingsCalculatorState {
-  batteryCapacityKwh: number; // 0 to 40.5 kWh
-  evKwhPerDay: number; // 0 to 45 kWh/day
+  batteryCapacityKwh: number; // 0 to 27+ kWh
+  evKwhPerDay: number; // 0 to 50 kWh/day
   smartThermostatEnabled: boolean;
-  heavyShiftKwhPerDay: number; // 0 to 15 kWh/day
-  selectedUtilityId: string;
+  heavyShiftKwhPerDay?: number;
+  selectedUtilityId?: string;
 }
 
-export interface SavingsCalculationOutput {
+export interface SavingsOutput {
   annualSavingsCad: number;
   monthlyAverageCad: number;
   fiveYearRoiCad: number;
@@ -84,6 +82,9 @@ export interface SavingsCalculationOutput {
   carbonOffsetKgPerYear: number;
   monthlyData: MonthlySavingsDataPoint[];
 }
+
+// Alias for backward compatibility
+export type SavingsCalculationOutput = SavingsOutput;
 
 export interface GuardrailSettings {
   autopilotEnabled: boolean;
@@ -135,7 +136,7 @@ export interface GreenButtonAuditResult {
   }>;
 }
 
-export interface SolarWeatherForecast {
+export interface SolarForecastOutput {
   condition: 'sunny' | 'partly_cloudy' | 'overcast' | 'rain';
   uvIndex: number;
   peakIrradianceWpM2: number;
@@ -147,7 +148,10 @@ export interface SolarWeatherForecast {
   hourlyIrradiance: Array<{ hour: string; irradiance: number; generationKw: number }>;
 }
 
-export interface IesoGridFuelMix {
+// Alias for backward compatibility
+export type SolarWeatherForecast = SolarForecastOutput;
+
+export interface FuelMixState {
   timestamp: string;
   totalDemandMw: number;
   nuclearPct: number;
@@ -159,6 +163,9 @@ export interface IesoGridFuelMix {
   householdAvoidedCo2TodayKg: number;
   gridStatus: 'Clean Baseload' | 'Peaker Surge' | 'Moderate';
 }
+
+// Alias for backward compatibility
+export type IesoGridFuelMix = FuelMixState;
 
 export interface SmartEvseDevice {
   id: string;

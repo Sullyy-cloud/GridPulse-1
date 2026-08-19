@@ -1,22 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import {
   Sparkles,
   CheckCircle2,
   Copy,
   Check,
-  Send,
-  Building2,
   Zap,
   ShieldCheck,
-  Award,
-  QrCode,
-  Share2,
   Car,
   BatteryCharging,
   Sun,
   Thermometer,
   Layers,
+  AlertCircle,
 } from 'lucide-react';
 import { ONTARIO_UTILITIES, lookupOntarioPostalCode } from '../data/ontarioRates';
 import { WaitlistSubmission } from '../types';
@@ -36,12 +32,14 @@ export const WaitlistForm: React.FC<WaitlistFormProps> = ({
   const [email, setEmail] = useState(initialEmail);
   const [postalCode, setPostalCode] = useState(initialPostalCode);
   const [utilityId, setUtilityId] = useState('toronto_hydro');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // React to prop changes if user submits from Hero quick form
-  React.useEffect(() => {
+  useEffect(() => {
     if (initialPostalCode) setPostalCode(initialPostalCode);
     if (initialEmail) setEmail(initialEmail);
   }, [initialPostalCode, initialEmail]);
+
   const [selectedHardware, setSelectedHardware] = useState<string[]>([
     'Tesla Powerwall / ESS',
     'Electric Vehicle (Tesla/Ford/GM)',
@@ -82,15 +80,48 @@ export const WaitlistForm: React.FC<WaitlistFormProps> = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName || !email || !postalCode) return;
 
     setIsSubmitting(true);
+    setErrorMessage(null);
 
-    setTimeout(() => {
+    const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || (import.meta as any).env?.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || (import.meta as any).env?.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    const payload = {
+      full_name: fullName,
+      email,
+      postal_code: postalCode.toUpperCase(),
+      utility_provider: utilityId,
+      hardware_owned: selectedHardware,
+    };
+
+    try {
+      if (supabaseUrl && supabaseAnonKey) {
+        const response = await fetch(`${supabaseUrl}/rest/v1/waitlist_signups`, {
+          method: 'POST',
+          headers: {
+            apikey: supabaseAnonKey,
+            Authorization: `Bearer ${supabaseAnonKey}`,
+            'Content-Type': 'application/json',
+            Prefer: 'return=minimal',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({ message: response.statusText }));
+          throw new Error(errData?.message || `Registration failed with status ${response.status}`);
+        }
+      } else {
+        // Log warning if Supabase keys are not set
+        console.warn('Supabase credentials not detected in environment. Proceeding in offline beta mode.');
+      }
+
       const randomQueue = Math.floor(Math.random() * 450) + 1280;
-      const refCode = `VOLT-ON-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+      const refCode = `GRID-ON-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
 
       const newSubmission: WaitlistSubmission = {
         id: Date.now().toString(),
@@ -116,7 +147,11 @@ export const WaitlistForm: React.FC<WaitlistFormProps> = ({
         origin: { y: 0.6 },
         colors: ['#10B981', '#06B6D4', '#34D399', '#38BDF8'],
       });
-    }, 1200);
+    } catch (err: any) {
+      console.error('Supabase waitlist error:', err);
+      setErrorMessage(err.message || 'Unable to register Ontario waitlist node. Please check connection and try again.');
+      setIsSubmitting(false);
+    }
   };
 
   const copyReferralLink = () => {
@@ -146,7 +181,7 @@ export const WaitlistForm: React.FC<WaitlistFormProps> = ({
                 </div>
 
                 <h2 className="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                  Claim Your Free <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Gridpulse Beta Pass</span>
+                  Claim Your Free <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">GridPulse Beta Pass</span>
                 </h2>
 
                 <p className="text-xs sm:text-sm text-slate-400 max-w-xl mt-1">
@@ -154,6 +189,14 @@ export const WaitlistForm: React.FC<WaitlistFormProps> = ({
                 </p>
               </div>
             </div>
+
+            {/* Error Banner */}
+            {errorMessage && (
+              <div className="mb-4 p-3.5 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-200 text-xs flex items-center gap-2.5 shadow-lg">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                <span>{errorMessage}</span>
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -304,7 +347,7 @@ export const WaitlistForm: React.FC<WaitlistFormProps> = ({
             </div>
 
             <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-white">
-              Welcome to the Gridpulse Network, {submittedData.fullName.split(' ')[0]}!
+              Welcome to the GridPulse Network, {submittedData.fullName.split(' ')[0]}!
             </h3>
 
             <p className="text-xs sm:text-sm text-slate-300 max-w-xl mx-auto">
