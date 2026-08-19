@@ -1,0 +1,6 @@
+{
+  "name": "Gridpulse Canada — Energy OS & Arbitrage Engine",
+  "description": "Whole-home energy OS and automated arbitrage engine for Ontario homeowners and renters to coordinate EVs, batteries, solar generators, and smart devices on the Ultra-Low Overnight (ULO) tariff.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
